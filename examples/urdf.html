@@ -10,58 +10,102 @@
 <script src="https://cdn.jsdelivr.net/npm/roslib@1/build/roslib.js"></script>
 <script src="../build/ros3d.js"></script>
 <script src="js/ColladaLoader.js"></script> <!-- override the default ColladaLoader -->
+<style>
+  html,body{
+    padding:0;
+    margin:0;
+  }
+</style>
 
 <script>
   /**
    * Setup all visualization elements when the page is loaded.
    */
+  var ros, viewer, kitchen, pr2, rosMap
   function init() {
     // Connect to ROS.
-    var ros = new ROSLIB.Ros({
-      url : 'ws://localhost:9090'
+    ros = new ROSLIB.Ros({
+      url :`ws://${location.hostname}:9090`
     });
-
     // Create the main viewer.
-    var viewer = new ROS3D.Viewer({
+    viewer = new ROS3D.Viewer({
       divID : 'urdf',
-      width : 800,
-      height : 600,
-      antialias : true
-    });
+      width : window.innerWidth,
+      height : window.innerHeight,
+      antialias : true,
+      background: '#303030',
+      // background: '#cccccc',
+      intensity: 0.6,
+      cameraPose: {
+        x : -6.5,
+        y : -5.5,
+        z : 7.8
+      }
+    })
+    viewer.cameraControls.center.x = -1
+    viewer.cameraControls.center.y = 1
+    
+    viewer.directionalLight.position.x = 2
+    viewer.directionalLight.position.y = -4
+    viewer.directionalLight.position.z = 2
+    
+    window.addEventListener('resize', function(e) {
+      viewer.resize(window.innerWidth, window.innerHeight)
+    })
 
     // Add a grid.
-    viewer.addObject(new ROS3D.Grid());
-
-    // Setup a client to listen to TFs.
-    var tfClient = new ROSLIB.TFClient({
+    viewer.addObject(new ROS3D.Grid({ num_cells:20 }));
+    rosMap = new ROS3D.OccupancyGridClient({
       ros : ros,
-      angularThres : 0.01,
-      transThres : 0.01,
-      rate : 10.0
+      rootObject: viewer.scene,
+      opacity: 0.7,
+      color: {r:0,g:255,b:255}
+    });
+    
+    // Setup the kitchen URDF client.
+    kitchen = new ROS3D.UrdfClient({
+      ros : ros,
+      tfClient: new ROSLIB.TFClient({
+        ros : ros,
+        angularThres : 0.01,
+        transThres : 0.01,
+        rate : 10.0,
+        fixedFrame: 'iai_kitchen/world'
+      }),
+      tfPrefix: 'iai_kitchen',
+      param: 'kitchen_description',
+      rootObject : viewer.scene,
     });
 
-    // Setup the URDF client.
-    var urdfClient = new ROS3D.UrdfClient({
+    // // Setup the PR2 URDF client.
+    pr2 = new ROS3D.UrdfClient({
       ros : ros,
-      tfClient : tfClient,
-      path : 'https://raw.githubusercontent.com/PR2/pr2_common/melodic-devel/',
+      tfClient : new ROSLIB.TFClient({
+        ros : ros,
+        angularThres : 0.01,
+        transThres : 0.01,
+        rate : 10.0,
+      }),
+      param: 'robot_description',
       rootObject : viewer.scene,
     });
   }
+  
+  window.addEventListener('DOMContentLoaded', init);
 </script>
 </head>
 
-<body onload="init()">
+<body>
   <h1>Simple URDF Example</h1>
   <p>Run the following commands in the terminal then refresh this page.</p>
   <ol>
-    <li><tt>roslaunch pr2_description upload_pr2.launch</tt></li>
-    <li><tt>rosrun robot_state_publisher robot_state_publisher</tt></li>
-    <li><tt>rosparam set use_gui true</tt></li>
-    <li><tt>rosrun joint_state_publisher joint_state_publisher</tt></li>
-    <li><tt>rosrun tf2_web_republisher tf2_web_republisher</tt></li>
-    <li><tt>roslaunch rosbridge_server rosbridge_websocket.launch</tt></li>
+    <li>Copy or create symlinks of the description files to server root directory. e.g <tt>ln -s /${WS_PATH}/iai_kitchen ./iai_kitchen</tt></li>
+    <li>Run the CRAM docker container.</li>
+    <li>Inside the CRAM container, run: <tt>rosrun tf2_web_republisher tf2_web_republisher</tt> and 
+      <tt>roslaunch rosbridge_server rosbridge_websocket.launch</tt></li>
+    <li>Test Robot joint:<tt>rosrun joint_state_publisher_gui joint_state_publisher_gui</tt></li>
+    <li>Start a static server under this directory.</li>
   </ol>
-  <div id="urdf"></div>
+  <div id="urdf" style="display: flex;"></div>
 </body>
 </html>
