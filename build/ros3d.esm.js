@@ -57653,6 +57653,10 @@ var Urdf = /*@__PURE__*/(function (superclass) {
     var tfPrefix = options.tfPrefix || '';
     var loader = options.loader;
 
+    var defaultColorMaterialFuc = options.defaultColorMaterialFuc || function () { 
+      return makeColorMaterial(0, 0, 0, 0.8); 
+    };
+
     superclass.call(this);
 
     // load all models
@@ -57669,6 +57673,8 @@ var Urdf = /*@__PURE__*/(function (superclass) {
           if (visual.material && visual.material.color) {
             var color = visual.material && visual.material.color;
             colorMaterial = makeColorMaterial(color.r, color.g, color.b, color.a);
+          } else {
+            colorMaterial = defaultColorMaterialFuc();
           }
           if (visual.geometry.type === ROSLIB.URDF_MESH) {
             var uri = visual.geometry.filename;
@@ -57706,7 +57712,7 @@ var Urdf = /*@__PURE__*/(function (superclass) {
               console.warn('Could not load geometry mesh: '+uri);
             }
           } else {
-            var shapeMesh = this.createShapeMesh(visual, options);
+            var shapeMesh = this.createShapeMesh(visual, colorMaterial);
             // Create a scene node with the shape
             var scene = new SceneNode({
               frameID: frameID,
@@ -57725,11 +57731,7 @@ var Urdf = /*@__PURE__*/(function (superclass) {
   if ( superclass ) Urdf.__proto__ = superclass;
   Urdf.prototype = Object.create( superclass && superclass.prototype );
   Urdf.prototype.constructor = Urdf;
-  Urdf.prototype.createShapeMesh = function createShapeMesh (visual, options) {
-    var colorMaterial = null;
-    if (!colorMaterial) {
-      colorMaterial = makeColorMaterial(0, 0, 0, 1);
-    }
+  Urdf.prototype.createShapeMesh = function createShapeMesh (visual, colorMaterial) {
     var shapeMesh;
     // Create a shape
     switch (visual.geometry.type) {

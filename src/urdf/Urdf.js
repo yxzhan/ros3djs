@@ -24,6 +24,10 @@ ROS3D.Urdf = function(options) {
   var tfPrefix = options.tfPrefix || '';
   var loader = options.loader;
 
+  var defaultColorMaterialFuc = options.defaultColorMaterialFuc || function () { 
+    return ROS3D.makeColorMaterial(0, 0, 0, 0.8); 
+  }
+
   THREE.Object3D.call(this);
 
   // load all models
@@ -40,6 +44,8 @@ ROS3D.Urdf = function(options) {
         if (visual.material && visual.material.color) {
           var color = visual.material && visual.material.color;
           colorMaterial = ROS3D.makeColorMaterial(color.r, color.g, color.b, color.a);
+        } else {
+          colorMaterial = defaultColorMaterialFuc();
         }
         if (visual.geometry.type === ROSLIB.URDF_MESH) {
           var uri = visual.geometry.filename;
@@ -77,7 +83,7 @@ ROS3D.Urdf = function(options) {
             console.warn('Could not load geometry mesh: '+uri);
           }
         } else {
-          var shapeMesh = this.createShapeMesh(visual, options);
+          var shapeMesh = this.createShapeMesh(visual, colorMaterial);
           // Create a scene node with the shape
           var scene = new ROS3D.SceneNode({
             frameID: frameID,
@@ -93,11 +99,7 @@ ROS3D.Urdf = function(options) {
   }
 };
 
-ROS3D.Urdf.prototype.createShapeMesh = function(visual, options) {
-  var colorMaterial = null;
-  if (!colorMaterial) {
-    colorMaterial = ROS3D.makeColorMaterial(0, 0, 0, 1);
-  }
+ROS3D.Urdf.prototype.createShapeMesh = function(visual, colorMaterial) {
   var shapeMesh;
   // Create a shape
   switch (visual.geometry.type) {

@@ -36214,7 +36214,7 @@ var ROS3D = (function (exports, ROSLIB) {
 
 			var scope = this;
 
-			var texturePath = this.texturePath && ( typeof this.texturePath === 'string' ) ? this.texturePath : THREE.LoaderUtils.extractUrlBase( url );
+			var texturePath = this.texturePath && ( typeof this.texturePath === 'string' ) ? this.texturePath : LoaderUtils.extractUrlBase( url );
 
 			var loader = new FileLoader( this.manager );
 			loader.setWithCredentials( this.withCredentials );
@@ -48326,7 +48326,7 @@ var ROS3D = (function (exports, ROSLIB) {
 
 	    var scope = this;
 
-	    var path = THREE.LoaderUtils.extractUrlBase(url);
+	    var path = THREE.Loader.prototype.extractUrlBase(url);
 
 	    var loader = new THREE.FileLoader(scope.manager);
 	    loader.load(url, function (text) {
@@ -50454,7 +50454,7 @@ var ROS3D = (function (exports, ROSLIB) {
 
 	        if (maxcount > 0) {
 
-	          // console.log('THREE.ColladaLoader: Geometry has faces with more than 4 vertices.');
+	          console.log('THREE.ColladaLoader: Geometry has faces with more than 4 vertices.');
 
 	        }
 
@@ -50961,7 +50961,7 @@ var ROS3D = (function (exports, ROSLIB) {
 
 	          } else {
 
-	            // console.log('THREE.ColladaLoader: ' + jointIndex + ' does not exist.');
+	            console.log('THREE.ColladaLoader: ' + jointIndex + ' does not exist.');
 
 	          }
 
@@ -51646,7 +51646,7 @@ var ROS3D = (function (exports, ROSLIB) {
 
 	    }
 
-	    // console.time('THREE.ColladaLoader');
+	    console.time('THREE.ColladaLoader');
 
 	    if (text.length === 0) {
 
@@ -51654,18 +51654,18 @@ var ROS3D = (function (exports, ROSLIB) {
 
 	    }
 
-	    // console.time('THREE.ColladaLoader: DOMParser');
+	    console.time('THREE.ColladaLoader: DOMParser');
 
 	    var xml = new DOMParser().parseFromString(text, 'application/xml');
 
-	    // console.timeEnd('THREE.ColladaLoader: DOMParser');
+	    console.timeEnd('THREE.ColladaLoader: DOMParser');
 
 	    var collada = getElementsByTagName(xml, 'COLLADA')[0];
 
 	    // metadata
 
 	    var version = collada.getAttribute('version');
-	    // console.log('THREE.ColladaLoader: File version', version);
+	    console.log('THREE.ColladaLoader: File version', version);
 
 	    var asset = parseAsset(getElementsByTagName(collada, 'asset')[0]);
 	    var textureLoader = new THREE.TextureLoader(this.manager);
@@ -51695,7 +51695,7 @@ var ROS3D = (function (exports, ROSLIB) {
 	      kinematicsScenes: {}
 	    };
 
-	    // console.time('THREE.ColladaLoader: Parse');
+	    console.time('THREE.ColladaLoader: Parse');
 
 	    parseLibrary(collada, 'library_animations', 'animation', parseAnimation);
 	    parseLibrary(collada, 'library_animation_clips', 'animation_clip', parseAnimationClip);
@@ -51711,9 +51711,9 @@ var ROS3D = (function (exports, ROSLIB) {
 	    parseLibrary(collada, 'library_kinematics_models', 'kinematics_model', parseKinematicsModel);
 	    parseLibrary(collada, 'scene', 'instance_kinematics_scene', parseKinematicsScene);
 
-	    // console.timeEnd('THREE.ColladaLoader: Parse');
+	    console.timeEnd('THREE.ColladaLoader: Parse');
 
-	    // console.time('THREE.ColladaLoader: Build');
+	    console.time('THREE.ColladaLoader: Build');
 
 	    buildLibrary(library.animations, buildAnimation);
 	    buildLibrary(library.clips, buildAnimationClip);
@@ -51726,7 +51726,7 @@ var ROS3D = (function (exports, ROSLIB) {
 	    buildLibrary(library.geometries, buildGeometry);
 	    buildLibrary(library.visualScenes, buildVisualScene);
 
-	    // console.timeEnd('THREE.ColladaLoader: Build');
+	    console.timeEnd('THREE.ColladaLoader: Build');
 
 	    setupAnimations();
 	    setupKinematics();
@@ -51746,7 +51746,7 @@ var ROS3D = (function (exports, ROSLIB) {
 
 	    scene.scale.multiplyScalar(asset.unit);
 
-	    // console.timeEnd('THREE.ColladaLoader');
+	    console.timeEnd('THREE.ColladaLoader');
 
 	    return {
 	      animations: animations,
@@ -58135,6 +58135,10 @@ var ROS3D = (function (exports, ROSLIB) {
 	    var tfPrefix = options.tfPrefix || '';
 	    var loader = options.loader;
 
+	    var defaultColorMaterialFuc = options.defaultColorMaterialFuc || function () { 
+	      return makeColorMaterial(0, 0, 0, 0.8); 
+	    };
+
 	    super();
 
 	    // load all models
@@ -58151,6 +58155,8 @@ var ROS3D = (function (exports, ROSLIB) {
 	          if (visual.material && visual.material.color) {
 	            var color = visual.material && visual.material.color;
 	            colorMaterial = makeColorMaterial(color.r, color.g, color.b, color.a);
+	          } else {
+	            colorMaterial = defaultColorMaterialFuc();
 	          }
 	          if (visual.geometry.type === ROSLIB__namespace.URDF_MESH) {
 	            var uri = visual.geometry.filename;
@@ -58188,7 +58194,7 @@ var ROS3D = (function (exports, ROSLIB) {
 	              console.warn('Could not load geometry mesh: '+uri);
 	            }
 	          } else {
-	            var shapeMesh = this.createShapeMesh(visual, options);
+	            var shapeMesh = this.createShapeMesh(visual, colorMaterial);
 	            // Create a scene node with the shape
 	            var scene = new SceneNode({
 	              frameID: frameID,
@@ -58204,11 +58210,7 @@ var ROS3D = (function (exports, ROSLIB) {
 	    }
 	  };
 
-	  createShapeMesh(visual, options) {
-	    var colorMaterial = null;
-	    if (!colorMaterial) {
-	      colorMaterial = makeColorMaterial(1, 1, 1, 0.6);
-	    }
+	  createShapeMesh(visual, colorMaterial) {
 	    var shapeMesh;
 	    // Create a shape
 	    switch (visual.geometry.type) {
@@ -59270,8 +59272,7 @@ var ROS3D = (function (exports, ROSLIB) {
 	    this.cameraControls.userZoomSpeed = cameraZoomSpeed;
 
 	    // lights
-      this.ambientLight = new THREE.AmbientLight(0x555555);
-	    this.scene.add(this.ambientLight);
+	    this.scene.add(new THREE.AmbientLight(0x555555));
 	    this.directionalLight = new THREE.DirectionalLight(0xffffff, intensity);
 	    this.scene.add(this.directionalLight);
 
