@@ -16,10 +16,13 @@ const input = 'src-esm/index.js';
 
 const browserGlobals = {
   roslib: 'ROSLIB',
+  three: 'THREE',
+  eventemitter2: 'EventEmitter2',
 };
-
 const moduleGlobals = {
   roslib: 'ROSLIB',
+  three: 'THREE',
+  eventemitter2: 'EventEmitter2',
 };
 
 const outputFiles = {
