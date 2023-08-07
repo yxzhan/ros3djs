@@ -5841,7 +5841,7 @@ var ROS3D = (function (exports, THREE$1, ROSLIB, EventEmitter2) {
        },
 
        'obj': function(meshRes, uri, options) {
-         options.material;
+         const material = options.material;
          const loader = new THREE.OBJLoader(options.loader);
          loader.log = function(message) {
            if (meshRes.warnings) {
@@ -5884,7 +5884,14 @@ var ROS3D = (function (exports, THREE$1, ROSLIB, EventEmitter2) {
                  MeshLoader.onError
                );
              } else {
-               // add the container group
+                // add the container group
+                if(material !== null) {
+                  obj.children.foreach(function(child) {
+                    if(child instanceof THREE.Mesh) {
+                      child.material = material;
+                    }
+                  });
+                }
                meshRes.add(obj);
              }
 

@@ -95,7 +95,14 @@ ROS3D.MeshLoader = {
                ROS3D.MeshLoader.onError
              );
            } else {
-             // add the container group
+              // add the container group
+              if(material !== null) {
+                obj.children.forEach(function(child) {
+                  if(child instanceof THREE.Mesh) {
+                    child.material = material;
+                  }
+                });
+              }
              meshRes.add(obj);
            }
 
