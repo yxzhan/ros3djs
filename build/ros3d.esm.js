@@ -5835,7 +5835,7 @@ var MeshLoader = {
            } else {
               // add the container group
               if(material !== null) {
-                obj.children.foreach(function(child) {
+                obj.children.forEach(function(child) {
                   if(child instanceof THREE.Mesh) {
                     child.material = material;
                   }

@@ -5886,7 +5886,7 @@ var ROS3D = (function (exports, THREE$1, ROSLIB, EventEmitter2) {
              } else {
                 // add the container group
                 if(material !== null) {
-                  obj.children.foreach(function(child) {
+                  obj.children.forEach(function(child) {
                     if(child instanceof THREE.Mesh) {
                       child.material = material;
                     }
